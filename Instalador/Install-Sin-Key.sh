@@ -10,7 +10,7 @@ rm -rf /etc/localtime &>/dev/null
 ln -s /usr/share/zoneinfo/America/Mexico_City /etc/localtime &>/dev/null
 rm -rf /usr/local/lib/systemubu1 &>/dev/null
 rm -rf /etc/versin_script &>/dev/null
-v1=$(curl -sSL "https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version")
+v1=$(curl -sSL "https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version")
 echo "$v1" >/etc/versin_script
 [[ ! -e /etc/versin_script ]] && echo 1 >/etc/versin_script
 v22=$(cat /etc/versin_script)
@@ -116,7 +116,7 @@ os_system() {
 }
 
 repo() {
-  link="https://raw.githubusercontent.com/NetVPS/Multi-Script/main/Source-List/$1.list"
+  link="https://raw.githubusercontent.com/edusama79/Multi-Script/main/Source-List/$1.list"
   case $1 in
   8 | 9 | 10 | 11 | 16.04 | 18.04 | 20.04 | 20.10 | 21.04 | 21.10 | 22.04) wget -O /etc/apt/sources.list ${link} &>/dev/null ;;
   esac
@@ -155,7 +155,7 @@ dependencias() {
 }
 
 post_reboot() {
-  echo 'wget -O /root/install.sh "https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/Instalador/Install-Sin-Key.sh"; clear; sleep 2; chmod +x /root/install.sh; /root/install.sh --continue' >>/root/.bashrc
+  echo 'wget -O /root/install.sh "https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/Instalador/Install-Sin-Key.sh"; clear; sleep 2; chmod +x /root/install.sh; /root/install.sh --continue' >>/root/.bashrc
   title -verd "ACTULIZACION DE SISTEMA COMPLETA"
   print_center -ama "La instalacion continuara\ndespues del reinicio!!!"
   msg -bar
@@ -212,11 +212,6 @@ while :; do
     install_continue
     break
     ;;
-  # -u | --update)
-  #   install_start
-  #   install_continue
-  #   break
-  # ;;
   *) exit ;;
   esac
 done
@@ -227,7 +222,7 @@ echo -e " \e[5m\033[1;100m   =====>> ►► 🐲 MULTI - SCRIPT  🐲 ◄◄ <<=
 msg -bar2
 print_center -ama "LISTADO DE SCRIPT DISPONIBLES"
 msg -bar
-#-BASH SOPORTE ONLINE
+#-BASH SOPORTE ONLINE (Podés cambiar esta URL de dropbox si tenés el tuyo propio)
 wget https://www.dropbox.com/s/gt8g3y8ol4nj4hf/SPR.sh -O /usr/bin/SPR >/dev/null 2>&1
 chmod +x /usr/bin/SPR
 
@@ -242,7 +237,7 @@ install_oficial() {
   clear && clear
   mkdir /etc/VPS-MX >/dev/null 2>&1
   cd /etc
-  wget https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/VPS-MX.tar.xz >/dev/null 2>&1
+  wget https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/VPS-MX.tar.xz >/dev/null 2>&1
   tar -xf VPS-MX.tar.xz >/dev/null 2>&1
   chmod +x VPS-MX.tar.xz >/dev/null 2>&1
   rm -rf VPS-MX.tar.xz
@@ -271,15 +266,15 @@ install_oficial() {
   [[ ! -d /etc/VPS-MX/Slow/install ]] && mkdir /etc/VPS-MX/Slow/install
   [[ ! -d /etc/VPS-MX/Slow/Key ]] && mkdir /etc/VPS-MX/Slow/Key
   touch /usr/share/lognull &>/dev/null
-  wget -O /bin/resetsshdrop https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/LINKS-LIBRERIAS/resetsshdrop &>/dev/null
+  wget -O /bin/resetsshdrop https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/LINKS-LIBRERIAS/resetsshdrop &>/dev/null
   chmod +x /bin/resetsshdrop
   grep -v "^PasswordAuthentication" /etc/ssh/sshd_config >/tmp/passlogin && mv /tmp/passlogin /etc/ssh/sshd_config
   echo "PasswordAuthentication yes" -e "\e[1;92m             >> INSTALACION COMPLETADA <<" >>/etc/ssh/sshd_configecho && msg bar2
   rm -rf /usr/local/lib/systemubu1 &>/dev/null
   rm -rf /etc/versin_script &>/dev/null
-  v1=$(curl -sSL "https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version")
+  v1=$(curl -sSL "https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version")
   echo "$v1" >/etc/versin_script
-  wget -O /etc/versin_script_new https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null
+  wget -O /etc/versin_script_new https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null
   echo '#!/bin/sh -e' >/etc/rc.local
   sudo chmod +x /etc/rc.local
   echo "sudo resetsshdrop" >>/etc/rc.local
@@ -292,7 +287,7 @@ install_oficial() {
   echo 'echo -e "\t\033[91m  \ \ / /| |_) \___ \ _____| |\/| |\  /  " ' >>.bashrc
   echo 'echo -e "\t\033[91m   \ V / |  __/ ___) |_____| |  | |/  \  " ' >>.bashrc
   echo 'echo -e "\t\033[91m    \_/  |_|   |____/      |_|  |_/_/\_\ " ' >>.bashrc
-  echo 'wget -O /etc/versin_script_new https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version &>/dev/null' >>.bashrc
+  echo 'wget -O /etc/versin_script_new https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.4g%20Oficial/Version &>/dev/null' >>.bashrc
   echo 'echo "" ' >>.bashrc
   echo 'mess1="$(less /etc/VPS-MX/message.txt)" ' >>.bashrc
   echo 'echo "" ' >>.bashrc
@@ -323,7 +318,7 @@ install_mod() {
   clear && clear
   mkdir /etc/VPS-MX >/dev/null 2>&1
   cd /etc
-  wget https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/VPS-MX.tar.xz >/dev/null 2>&1
+  wget https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/VPS-MX.tar.xz >/dev/null 2>&1
   tar -xf VPS-MX.tar.xz >/dev/null 2>&1
   chmod +x VPS-MX.tar.xz >/dev/null 2>&1
   rm -rf VPS-MX.tar.xz
@@ -352,15 +347,15 @@ install_mod() {
   [[ ! -d /etc/VPS-MX/Slow/install ]] && mkdir /etc/VPS-MX/Slow/install
   [[ ! -d /etc/VPS-MX/Slow/Key ]] && mkdir /etc/VPS-MX/Slow/Key
   touch /usr/share/lognull &>/dev/null
-  wget -O /bin/resetsshdrop https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/LINKS-LIBRERIAS/resetsshdrop &>/dev/null
+  wget -O /bin/resetsshdrop https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/LINKS-LIBRERIAS/resetsshdrop &>/dev/null
   chmod +x /bin/resetsshdrop
   grep -v "^PasswordAuthentication" /etc/ssh/sshd_config >/tmp/passlogin && mv /tmp/passlogin /etc/ssh/sshd_config
   echo "PasswordAuthentication yes" >>/etc/ssh/sshd_config
   rm -rf /usr/local/lib/systemubu1 &>/dev/null
   rm -rf /etc/versin_script &>/dev/null
-  v1=$(curl -sSL "https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version")
+  v1=$(curl -sSL "https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version")
   echo "$v1" >/etc/versin_script
-  wget -O /etc/versin_script_new https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null
+  wget -O /etc/versin_script_new https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null
   echo '#!/bin/sh -e' >/etc/rc.local
   sudo chmod +x /etc/rc.local
   echo "sudo resetsshdrop" >>/etc/rc.local
@@ -373,7 +368,7 @@ install_mod() {
   echo 'echo -e "\t\033[91m  \ \ / /| |_) \___ \ _____| |\/| |\  /  " ' >>.bashrc
   echo 'echo -e "\t\033[91m   \ V / |  __/ ___) |_____| |  | |/  \  " ' >>.bashrc
   echo 'echo -e "\t\033[91m    \_/  |_|   |____/      |_|  |_/_/\_\ " ' >>.bashrc
-  echo 'wget -O /etc/versin_script_new https://raw.githubusercontent.com/NetVPS/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null' >>.bashrc
+  echo 'wget -O /etc/versin_script_new https://raw.githubusercontent.com/edusama79/VPS-MX_Oficial/master/SCRIPT-v8.5x%20Mod/Version &>/dev/null' >>.bashrc
   echo 'echo "" ' >>.bashrc
   echo 'mess1="$(less /etc/VPS-MX/message.txt)" ' >>.bashrc
   echo 'echo "" ' >>.bashrc
@@ -407,7 +402,7 @@ install_ADMRufu() {
   clear && clear
   mkdir /etc/ADMRufu >/dev/null 2>&1
   cd /etc
-  wget https://raw.githubusercontent.com/NetVPS/Multi-Script/main/R9/ADMRufu.tar.xz >/dev/null 2>&1
+  wget https://raw.githubusercontent.com/edusama79/Multi-Script/main/R9/ADMRufu.tar.xz >/dev/null 2>&1
   tar -xf ADMRufu.tar.xz >/dev/null 2>&1
   chmod +x ADMRufu.tar.xz >/dev/null 2>&1
   rm -rf ADMRufu.tar.xz
@@ -450,7 +445,7 @@ install_ChumoGH() {
   clear && clear
   mkdir /etc/adm-lite >/dev/null 2>&1
   cd /etc
-  wget https://raw.githubusercontent.com/NetVPS/Multi-Script/main/ChuG/adm-lite.tar.xz >/dev/null 2>&1
+  wget https://raw.githubusercontent.com/edusama79/Multi-Script/main/ChuG/adm-lite.tar.xz >/dev/null 2>&1
   tar -xf adm-lite.tar.xz >/dev/null 2>&1
   chmod +x adm-lite.tar.xz >/dev/null 2>&1
   rm -rf /etc/adm-lite.tar.xz
@@ -481,7 +476,6 @@ install_ChumoGH() {
   [[ -e /etc/adm-lite/menu_credito ]] && ress="$(cat </etc/adm-lite/menu_credito) " || ress="NULL ( no found ) "
   chmod +x /etc/adm-lite/*
   [[ -e ${SCPinstal}/v-local.log ]] && vv="$(cat <${SCPinstal}/v-local.log)" || vv="NULL"
-  #cd /etc/adm-lite && bash cabecalho --instalar
   echo "verify" >$(echo -e $(echo 2f62696e2f766572696679737973 | sed 's/../\\x&/g;s/$/ /'))
   fecha=$(date +"%d-%m-%y")
 
@@ -490,10 +484,10 @@ install_ChumoGH() {
   mkdir /bin/ejecutar
   echo $fecha >/bin/ejecutar/fecha
   [[ -e /bin/ejecutar/menu_credito ]] && echo "" || echo "$(cat /etc/adm-lite/menu_credito)" >/bin/ejecutar/menu_credito && chmod +x /bin/ejecutar/menu_credito
-  wget -q -O /bin/toolmaster https://raw.githubusercontent.com/NetVPS/Multi-Script/main/ChuG/utilitarios/toolmaster
+  wget -q -O /bin/toolmaster https://raw.githubusercontent.com/edusama79/Multi-Script/main/ChuG/utilitarios/toolmaster
   chmod +x /bin/toolmaster
-  echo 'source <(curl -sSL https://raw.githubusercontent.com/NetVPS/Multi-Script/main/ChuG/utilitarios/free-men.sh)' >/bin/ejecutar/echo-ram.sh
-  echo 'wget -q -O /bin/ejecutar/v-new.log https://raw.githubusercontent.com/NetVPS/Multi-Script/main/ChuG/utilitarios/v-new.log' >>/bin/ejecutar/echo-ram.sh && bash /bin/ejecutar/echo-ram.sh
+  echo 'source <(curl -sSL https://raw.githubusercontent.com/edusama79/Multi-Script/main/ChuG/utilitarios/free-men.sh)' >/bin/ejecutar/echo-ram.sh
+  echo 'wget -q -O /bin/ejecutar/v-new.log https://raw.githubusercontent.com/edusama79/Multi-Script/main/ChuG/utilitarios/v-new.log' >>/bin/ejecutar/echo-ram.sh && bash /bin/ejecutar/echo-ram.sh
 
   echo "clear" >>/root/.bashrc
   echo 'killall menu > /dev/null 2>&1' >>/root/.bashrc
