@@ -1,0 +1,297 @@
+#!/bin/bash
+clear
+clear
+[[ "$(whoami)" != "root" ]] && {
+    echo -e "\033[1;33m[\033[1;31m| NO HAS INICIADO CORRECTAMENTE EL SCRIPT, DEVES INICIAR COMO USUARIO ROOT |\033[1;33m] \033[1;37mDEVES EJECUTAR EL SIGUIENTE COMANDO \033[1;33msudo -i\033[0m"
+    exit 0
+}
+
+# ===== CONFIGURACION VPS-SAMA =====
+declare -A cor=([0]="\033[1;37m" [1]="\033[1;34m" [2]="\033[1;31m" [3]="\033[1;33m" [4]="\033[1;32m")
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1 >/dev/null 2>&1
+sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=1 >/dev/null 2>&1
+
+_hora=$(printf '%(%D-%H:%M:%S)T')
+SCPdir="/etc/VPS-SAMA" && [[ ! -d ${SCPdir} ]] && mkdir -p ${SCPdir}
+DIR="/etc/VPS-SAMA"
+SCPusr="${SCPdir}/controlador"
+SCPfrm="${SCPdir}/herramientas"
+SCPinst="${SCPdir}/protocolos"
+SCPidioma="${SCPdir}/idioma"
+DB_USUARIOS="${SCPdir}/usuarios.db"
+DB_VENCIMIENTOS="${SCPdir}/vencimientos.json"
+
+[[ ! -d ${SCPdir} ]] && mkdir -p ${SCPdir}/{controlador,herramientas,protocolos}
+[[ ! -f ${DB_USUARIOS} ]] && echo "[]" > ${DB_USUARIOS}
+[[ ! -f ${DB_VENCIMIENTOS} ]] && echo "{}" > ${DB_VENCIMIENTOS}
+
+_core=$(printf '%-1s' "$(grep -c cpu[0-9] /proc/stat)")
+_ram=$(printf ' %-9s' "$(free -h | grep -i mem | awk {'print $2'})")
+_usor=$(printf '%-8s' "$(free -m | awk 'NR==2{printf "%.2f%%", $3*100/$2 }')")
+
+# ===== FUNCIONES =====
+msg() {
+    NEGRITO='\e[1m'
+    SEMCOR='\e[0m'
+    COLOR[0]='\033[1;37m'
+    COLOR[1]='\e[93m'
+    COLOR[2]='\e[32m'
+    COLOR[3]='\e[31m'
+    COLOR[4]='\e[34m'
+    COLOR[6]='\033[1;97m'
+    case $1 in
+    -ne) cor="${COLOR[1]}${NEGRITO}" && echo -ne "${cor}${2}${SEMCOR}" ;;
+    -ama) cor="${COLOR[3]}${NEGRITO}" && echo -e "${cor}${2}${SEMCOR}" ;;
+    -verd) cor="${COLOR[2]}${NEGRITO}" && echo -e "${cor}${2}${SEMCOR}" ;;
+    -azu) cor="${COLOR[6]}${NEGRITO}" && echo -e "${cor}${2}${SEMCOR}" ;;
+    -bar) echo -e "${COLOR[3]}═══════════════════════════════════════════════════════════════════════════════${SEMCOR}" ;;
+    -tit) echo -e "\e[97m \033[1;41m| 🐲 SCRIPT VPS-SAMA PREMIUM 🐲 | \033[0;37m" ;;
+    esac
+}
+
+selection_fun() {
+    local selection="null" && local range
+    for ((i = 0; i <= $1; i++)); do range[$i]="$i "; done
+    while [[ ! $(echo ${range[*]} | grep -w "$selection") ]]; do
+       echo -ne "\033[1;37m ► Seleccione una Opcion: " >&2
+       read selection
+       tput cuu1 >&2 && tput dl1 >&2
+    done
+    echo $selection
+}
+
+meu_ip() {
+    if [[ -e /etc/VPS-SAMA/MEUIPvps ]]; then
+       echo "$(cat /etc/VPS-SAMA/MEUIPvps)"
+    else
+       MEU_IP=$(curl -sS https://api.ipify.org 2>/dev/null || wget -qO- ipinfo.io/ip 2>/dev/null || echo "0.0.0.0")
+       echo "$MEU_IP" > /etc/VPS-SAMA/MEUIPvps
+    fi
+}
+
+os_system() {
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        echo "$NAME $VERSION_ID"
+    else
+        head -1 /etc/issue
+    fi
+}
+
+# ===== GESTION DE USUARIOS =====
+
+crear_usuario_normal() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "CREAR USUARIO SSH (NORMAL)"
+    msg -bar
+    
+    local user="" pass="" dias=""
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Nombre de usuario (Max 16): " && read user
+       user=$(echo "$user" | sed 's/[^a-zA-Z0-9_-]//g')
+       [[ ${#user} -le 16 && ${#user} -ge 3 ]] && break
+       echo -e "\033[1;31m[!] Usuario invalido (3-16 caracteres)\033[0m"
+    done
+    
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Contrasena (Max 16): " && read pass
+       [[ ${#pass} -le 16 && ${#pass} -ge 6 ]] && break
+       echo -e "\033[1;31m[!] Contrasena invalida (6-16 caracteres)\033[0m"
+    done
+    
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Dias de duracion: " && read dias
+       [[ "$dias" =~ ^[0-9]+$ ]] && [[ $dias -gt 0 ]] && break
+       echo -e "\033[1;31m[!] Ingrese numero valido\033[0m"
+    done
+    
+    local fecha_venc=$(date -d "+$dias days" +"%Y-%m-%d")
+    useradd -M -s /bin/false -e "$fecha_venc" "$user" 2>/dev/null
+    echo "$user:$pass" | chpasswd 2>/dev/null
+    
+    msg -bar
+    msg -verd "[+] Usuario creado exitosamente"
+    echo -e "    Usuario: $user | Pass: $pass | Vence: $(date -d "+$dias days" +"%d/%m/%Y")"
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+crear_usuario_token() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "CREAR USUARIO TOKEN"
+    msg -bar
+    
+    local token="" dias=""
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Nombre del Token (Max 16): " && read token
+       token=$(echo "$token" | sed 's/[^a-zA-Z0-9_-]//g')
+       [[ ${#token} -le 16 && ${#token} -ge 3 ]] && break
+       echo -e "\033[1;31m[!] Token invalido (3-16 caracteres)\033[0m"
+    done
+    
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Dias: " && read dias
+       [[ "$dias" =~ ^[0-9]+$ ]] && [[ $dias -gt 0 ]] && break
+       echo -e "\033[1;31m[!] Ingrese numero valido\033[0m"
+    done
+    
+    local fecha_venc=$(date -d "+$dias days" +"%Y-%m-%d")
+    local pass_token="TOKEN_SAMA_$(date +%s)"
+    useradd -M -s /bin/false -e "$fecha_venc" "$token" 2>/dev/null
+    echo "$token:$pass_token" | chpasswd 2>/dev/null
+    
+    msg -bar
+    msg -verd "[+] Token creado exitosamente"
+    echo -e "    Token: $token | Pass: $pass_token | Vence: $(date -d "+$dias days" +"%d/%m/%Y")"
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+crear_usuario_hwid() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "CREAR USUARIO HWID (ANDROID)"
+    msg -bar
+    
+    local user="" hwid="" dias=""
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Nombre del Usuario (Max 16): " && read user
+       user=$(echo "$user" | sed 's/[^a-zA-Z0-9_-]//g')
+       [[ ${#user} -le 16 && ${#user} -ge 3 ]] && break
+       echo -e "\033[1;31m[!] Usuario invalido (3-16 caracteres)\033[0m"
+    done
+    
+    echo -ne "\033[1;32m[*]\033[1;37m HWID del dispositivo: " && read hwid
+    hwid=$(echo "$hwid" | sed 's/[^a-zA-Z0-9_-]//g')
+    
+    while true; do
+       echo -ne "\033[1;32m[*]\033[1;37m Dias: " && read dias
+       [[ "$dias" =~ ^[0-9]+$ ]] && [[ $dias -gt 0 ]] && break
+       echo -e "\033[1;31m[!] Ingrese numero valido\033[0m"
+    done
+    
+    local fecha_venc=$(date -d "+$dias days" +"%Y-%m-%d")
+    useradd -M -s /bin/false -e "$fecha_venc" "$user" 2>/dev/null
+    echo "$user:$hwid" | chpasswd 2>/dev/null
+    
+    msg -bar
+    msg -verd "[+] Usuario HWID creado exitosamente"
+    echo -e "    Usuario: $user | HWID: $hwid | Vence: $(date -d "+$dias days" +"%d/%m/%Y")"
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+ver_usuarios() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "LISTADO DE USUARIOS REGISTRADOS"
+    msg -bar
+    
+    getent passwd | awk -F: '$3 >= 1000 {print $1}' | while read user; do
+        exp_date=$(chage -l "$user" 2>/dev/null | grep "Account expires" | cut -d: -f2 | xargs)
+        echo -e "  \033[1;32m$user\033[0m - Vence: \033[1;33m$exp_date\033[0m"
+    done
+    
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+eliminar_usuario() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "ELIMINAR USUARIO"
+    msg -bar
+    
+    echo -ne "\033[1;32m[*]\033[1;37m Usuario a eliminar: " && read user
+    
+    if id "$user" &>/dev/null; then
+        userdel -f "$user" 2>/dev/null
+        msg -verd "[+] Usuario eliminado exitosamente"
+    else
+        echo -e "\033[1;31m[!] Usuario no encontrado\033[0m"
+    fi
+    
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+iniciar_api() {
+    clear && msg -bar
+    msg -tit
+    msg -ama "INICIANDO API ANDROID"
+    msg -bar
+    
+    cat > ${SCPdir}/api_android.py <<'PYEOF'
+#!/usr/bin/env python3
+import json
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+from urllib.parse import urlparse
+
+class APIHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        parsed_path = urlparse(self.path)
+        
+        if parsed_path.path == '/api/usuarios':
+            import pwd
+            usuarios = []
+            try:
+                for p in pwd.getwall():
+                    if p.pw_uid >= 1000:
+                        usuarios.append({"usuario": p.pw_name, "uid": p.pw_uid})
+            except:
+                pass
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(usuarios).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        pass
+
+if __name__ == '__main__':
+    server = HTTPServer(('0.0.0.0', 81), APIHandler)
+    print("[+] API Android iniciada en puerto 81")
+    server.serve_forever()
+PYEOF
+    
+    chmod +x ${SCPdir}/api_android.py
+    screen -dmS api_sama python3 ${SCPdir}/api_android.py 2>/dev/null
+    
+    msg -verd "[+] API REST iniciada en puerto 81"
+    echo -e "    http://$(meu_ip):81/api/usuarios"
+    msg -bar
+    read -p "Presione Enter..."
+}
+
+# ===== MENU PRINCIPAL =====
+clear && msg -bar && msg -tit && msg -bar
+echo -e "      \033[1;37mIP VPS: \033[1;93m$(meu_ip)\033[1;37m | Sistema: \033[1;96m$(os_system)"
+echo -e "      \033[1;37mCPU: \033[1;32m${_core}\033[1;37m | RAM: \033[1;32m${_ram}\033[1;37m | USO: \033[1;32m${_usor}"
+msg -bar
+
+echo -ne " \033[1;32m[1]\033[1;37m CREAR USUARIO NORMAL (SSH)\n"
+echo -ne " \033[1;32m[2]\033[1;37m CREAR USUARIO TOKEN\n"
+echo -ne " \033[1;32m[3]\033[1;37m CREAR USUARIO HWID (ANDROID)\n"
+echo -ne " \033[1;32m[4]\033[1;37m VER TODOS LOS USUARIOS\n"
+echo -ne " \033[1;32m[5]\033[1;37m ELIMINAR USUARIO\n"
+echo -ne " \033[1;32m[6]\033[1;37m INICIAR API ANDROID\n"
+echo -ne " \033[1;32m[0]\033[1;37m SALIR\n"
+msg -bar
+
+selection=$(selection_fun 6)
+case ${selection} in
+1) crear_usuario_normal && exec bash $0 ;;
+2) crear_usuario_token && exec bash $0 ;;
+3) crear_usuario_hwid && exec bash $0 ;;
+4) ver_usuarios && exec bash $0 ;;
+5) eliminar_usuario && exec bash $0 ;;
+6) iniciar_api && exec bash $0 ;;
+0) exit 0 ;;
+esac
